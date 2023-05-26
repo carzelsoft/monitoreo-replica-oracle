@@ -1,0 +1,56 @@
+zabbix_export:
+  version: '5.2'
+  date: '2023-05-26T21:43:52Z'
+  groups:
+    -
+      name: 'Ubicación donde esta el servidor'
+  templates:
+    -
+      template: oracle-replication
+      name: oracle-replication
+      groups:
+        -
+          name: 'Ubicación donde esta el servidor'
+      applications:
+        -
+          name: remotodb
+      items:
+        -
+          name: getMaster
+          type: EXTERNAL
+          key: getMasterC.pl
+          applications:
+            -
+              name: remotodb
+        -
+          name: Standby
+          type: EXTERNAL
+          key: getStandbyC.pl
+          applications:
+            -
+              name: remotodb
+  triggers:
+    -
+      expression: '{oracle-replication:getMasterC.pl.last()}-{oracle-replication:getStandbyC.pl.last()}>2'
+      recovery_mode: RECOVERY_EXPRESSION
+      recovery_expression: '{oracle-replication:getMasterC.pl.last()}-{oracle-replication:getStandbyC.pl.last()}=1'
+      name: 'Falla en replicación'
+      priority: HIGH
+  graphs:
+    -
+      name: 'sincronizacion de bases'
+      graph_items:
+        -
+          sortorder: '1'
+          color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: oracle-replication
+            key: getMasterC.pl
+        -
+          sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: oracle-replication
+            key: getStandbyC.pl
